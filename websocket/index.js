@@ -11,11 +11,6 @@ function socketManager(socket) {
   })
 
 
-
-
-
-
-
   socket.on('msg', (msg) => {
     socket.broadcast.emit('msg', msg)
   })
