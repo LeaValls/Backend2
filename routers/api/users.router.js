@@ -1,8 +1,7 @@
 const { Router } = require('express')
-const UserManager = require('../../models/userManager')
+const manager = require('../../managers/user.manager')
 
 const router = Router()
-const manager = new UserManager('users.json')
 
 router.post('/', async (req, res) => {
   const { body } =  req
