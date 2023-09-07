@@ -15,7 +15,7 @@ router.get('/github', passport.authenticate('github', { scope: ['user:email']}),
 
 // una vez que el usuario se logueo en github
 // es redirigido a nuestro callback para poder guardar la session
-router.get('/githubSessions', 
+router.get('/github/callback', 
     passport.authenticate('github', { failureRedirect: '/login'}), 
     async (req, res) => {
         // se guarda la session del usuario

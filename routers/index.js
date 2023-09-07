@@ -15,7 +15,7 @@ api.use('/products', apiAuth,  ProductRoutes);
 api.use('/users', apiAuth, UserRoutes);
 api.use('/orders', OrderRoutes);
 api.use('/auth', AuthRoutes)
-api.use('/jwtAuth', jwtRoutes);
+
 
 const home = Router()
 
