@@ -3,7 +3,7 @@ const userManager = require('../managers/user.manager')
 
 const CLIENT_ID = "Iv1.cc0abfbd3006c27b";
 const CLIENT_SECRET = "2dd94b3c138c271778b497ce52b769fb98a1d680";
-const CALLBACK_URL = 'http://localhost:8080/api/auth/github/callback';
+const CALLBACK_URL = 'http://localhost:8080/github/callback';
 
 // el callback que la estrategia ejecuta cada que se
 // intenta logear con github

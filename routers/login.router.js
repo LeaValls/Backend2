@@ -4,6 +4,7 @@ const passport = require('passport')
 const userManager = require('../managers/user.manager')
 const isAuth = require('../middlewares/auth.middleware')
 const { hashPassword, isValidPassword } = require('../utils/password.utils')
+const github = require("../config/passport.github")
 
 const router = Router()
 
@@ -157,6 +158,32 @@ const resetpassword = async (req, res) => {
 router.get('/signup', (_, res) => res.render('signup'))
 router.get('/login', (_, res) => res.render('login'))
 router.get('/resetpassword', (_, res) => res.render('resetpassword'))
+
+router.get(
+  "/github",
+  passport.authenticate("github"),
+  (_, res) => {}
+);
+
+router.get(
+  "/githubSessions",
+
+  passport.authenticate("github"),
+
+  (req, res) => {
+      const user = req.user;
+
+      
+      req.session.user = {
+          id: user.id,
+          name: user.firstname,
+          role: user?.role ?? "Customer",
+          email: user.email,
+      };
+
+      res.redirect("/");
+  }
+);
 
 
 
