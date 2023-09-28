@@ -1,17 +1,16 @@
-const { Schema, model } = require('mongoose')
-const paginate = require('mongoose-paginate-v2')
-
+const { Schema, model } =require('mongoose')
 
 const schema = new Schema({
   title: String,
   description: String,
+  code: Number,
   price: Number,
-  keywords: [String],
-  stock: { type: Number, default: 0 },
-  createdDate: { type: Number, default: Date.now() }
+  status: Boolean,
+  stock: Number,
+  category: [String],
+  thumbnails: [String],
+  createDate: {type: Number, default: Date.now()}
 })
-
-schema.plugin(paginate)
 
 const productModel = model('products', schema)
 

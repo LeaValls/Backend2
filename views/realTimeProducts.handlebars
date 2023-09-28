@@ -1,20 +1,48 @@
-<div id="realTimeProducts" class="uk-child-width-1-4@m" uk-grid>
-  {{#each products}}
-    <div>
-      <div class="uk-card uk-card-default">
-        <div class="uk-card-media-top">
-          <img alt="foto producto" />
-        </div>
-        <div class="uk-card-body">
-          <h3 class="uk-card-title">{{ this.title }}</h3>
-          <h5> ${{this.price}}</h5>
-          {{#each this.keywords}}
-            <span class="uk-badge">{{this}}</span>
-          {{/each}}
-          <p>{{this.description}}</p>
-          <button onclick="addToCart({{this.id}})" class="uk-button uk-button-secondary uk-button-small">Agregar al carrito</button>
-        </div>
-      </div>
+<div>
+  <h1>¡Hola, {{user.name}}! ¡Nos alegramos de verte!</h1>
+  <h2>Web Socket</h2>
+  {{#if isAdmin}}
+    <div class="container">
+      {{#each products}}
+          <div class="card">
+            <figure>
+              <img src="{{this.thumbnails}}" alt="this.title"></img>
+            </figure>
+            <section class="details">
+              <div class="min-details">
+                <h1 class="title">{{this.title}}</h1>
+                <h1 class="price">{{this.price}}</h1>
+              </div>
+              <a href="#" class="btn">add to cart</a>
+            </section>
+          </div>
+      {{/each}}
     </div>
-  {{/each}}
+    <div class="formulario">
+      <h2>Agregar nuevo producto</h2>
+      <form id="new-product-form" method="POST" action="/realtimeproducts">
+        <input type="text" id="title" name="title" placeholder="Nombre del producto" required>
+        <input type="text" id="description" name="description" placeholder="Descripción del producto" required>
+        <input type="text" id="code" name="code" placeholder="Codigo del producto" required>
+        <input type="number" id="price" name="price" placeholder="Precio del producto" required>
+        <input type="number" id="stock" name="stock" placeholder="Cantidad" required>
+        <input type="text" id="category" name="category" placeholder="Categorías separadas por (,)" required>        
+        <input type="text" id="thumbnails" name="thumbnails" placeholder="URL de la imagen" required>
+        <input type="hidden" id="status" name="status" value="true" required>
+        <button type="submit" onclick="addNewProduct()">Agregar</button>
+      </form>
+    </div>
+    <div class="formulario">
+      <h2>Eliminar producto</h2>
+      <form id="delete-product-form" method="POST" action="/realtimeproducts">
+        <input type="text" id="titleDelete" name="titleDelete" placeholder="Nombre del producto" required>
+        <button type="button" onclick="deleteProduct()">Eliminar</button>
+      </form>
+    </div>
+
+  {{else}}
+    <p>No tienes permisos para ver la lista de productos</p>
+  {{/if}}
 </div>
+<script src="/socket.io/socket.io.js"></script>
+<script src="/js/productRealTime.js"></script>

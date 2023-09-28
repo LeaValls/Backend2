@@ -1,17 +1,16 @@
-const { Schema, model } = require('mongoose')
+const { Schema, model } = require("mongoose");
 
 const schema = new Schema({
   firstname: String,
-  lastname: { type: String, index: true },
-  email: { type: String, index: true },
+  lastname: String,
+  email: { type: String, unique: true },
+  age: Number,
   password: String,
-  role: { type: String, default: 'Customer' },
-  gender: String,
-  age: { type: Number },
-  createdDate: { type: Number, default: Date.now() },
-  address: { type: Schema.Types.ObjectId, ref: 'addresses' }
-})
+  cart: { type: Schema.Types.ObjectId, ref: "carts" },
+  role: { type: String, default: "user" },
+  createDate: { type: Number, default: Date.now() },
+});
 
-const userModel = model('users', schema)
+const userModel = model("users", schema);
 
-module.exports = userModel
+module.exports = userModel;

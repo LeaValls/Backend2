@@ -1,82 +1,142 @@
 (async () => {
-  const express = require('express')
-  const http = require('http')
-  const path = require('path')
-  const handlebars = require('express-handlebars')
+  const path = require("path");
+  const { Command } = require("commander");
+  const program = new Command();
+  program.option("-e, --env <env>", "Entorno de ejecucion", "production");
+  program.parse();
+
+  const { env } = program.opts();
+
+  //Variables de entorno
+  require("dotenv").config({
+    path: path.join(
+      __dirname,
+      env == "development" ? ".env.development" : ".env"
+    ),
+  });
+
+  const config = require("./config/config");
+
+  console.log(config);
+
+  //Routers
+  const productsRouter = require("./routes/productsRouter");
+  const cartsRouter = require("./routes/cartsRouter");
+  const viewRouter = require("./routes/viewsRouter");
+  const usersRouter = require("./routes/usersRouter");
+  const authRouter = require("./routes/auth.router");
+  const sessionsRouter = require("./routes/sessions.router");
+  
+
+  //Passport
+  const passport = require("passport");
+  const initPassportLocal = require("./config/passport.local.config");
+
+  //Mongoose
+  const mongoose = require("mongoose");
+  mongoose
+    .connect(config.MONGO_URL)
+    .then(() => console.log("se ha conectado a la base de datos"))
+    .catch(() => console.log("no se ha conectado a la base de datos"));
+
+  //Express
+  const express = require("express");
+  const app = express();
+
+  //Handlebars
+  const { engine } = require("express-handlebars");
+
+  //Web Socket
   const { Server } = require("socket.io");
-  const mongoose = require('mongoose')
-  const cookieParser = require('cookie-parser')
-  const session = require('express-session')
-  const MongoStore = require('connect-mongo')
-  const passport = require('passport')
+  const http = require("http");
+  const server = http.createServer(app);
+  const io = new Server(server);
 
-  const Routes = require('./routers/index')
-  const socketManager = require('./websocket')
-  const initPassportLocal = require('./config/passport.local.config')
+  //Socket Manager
+  const socketManager = require("./websocket/chat.socket");
+  io.on("connection", socketManager);
 
-  try {
+  //Express Session
+  const session = require("express-session");
 
-    // ${SCHEMA}://{USER}:{PASSWORD}@{HOSTNAME}:${PORT}/${DATABASE} -> LOCAL mongodb://localhost:27017/ecommerce
-    // mongoose.connect("mongodb://localhost:27017/ecommerce")
+  //File store Sessions locales
+  //const fileStore = require('session-file-store')
+  //const FileStore = fileStore(session)
 
-    await mongoose.connect("mongodb+srv://app:5UJvYAsuYJ9v461V@cluster0.ryzcf1s.mongodb.net/ecommerce?retryWrites=true&w=majority")
+  //Store de Mongo
+  const MongoStore = require("connect-mongo");
 
-    const app = express()
-    const server = http.createServer(app)
-    const io = new Server(server)
+  //cookie parser
+  const cookieParser = require("cookie-parser");
 
-    app.engine('handlebars', handlebars.engine())
-    app.set('views', path.join(__dirname, '/views'))
-    app.set('view engine', 'handlebars')
+  //Definiendo Puerto
+  const port = config.PORT;
+  server.listen(port, () => {
+    console.log(`Express Server Listening at http://localhost:${port}`);
+  });
+  io.on("connection", (socket) => {
+    console.log(`Cliente Conectado: ${socket.id}`);
 
-    app.use(express.urlencoded({ extended: true }))
-    app.use(express.json())
-    app.use('/static', express.static(path.join(__dirname + '/public')))
-    app.use(cookieParser('esunsecreto'))
+    socket.on("disconnect", () => {
+      console.log("Cliente Desconectado");
+    });
 
-    app.use(session({
-      secret: 'esunsecreto',
+    socket.on("addProduct", () => {
+      console.log("Producto agregado");
+    });
+  });
+
+  // Middleware para parsear parámetros o queries en caso de usar consultas complejas.
+  app.use(express.urlencoded({ extended: true }));
+  app.use(express.json());
+
+  //Middleware de sesion
+  app.use(cookieParser("esunsecreto"));
+  app.use(
+    session({
+      secret: "esunsecreto",
       resave: true,
       saveUninitialized: true,
-      
+      //store: new FileStore({ path: './sessions', ttl: 100, retries: 0})
       store: MongoStore.create({
-        mongoUrl: "mongodb+srv://app:5UJvYAsuYJ9v461V@cluster0.ryzcf1s.mongodb.net/ecommerce?retryWrites=true&w=majority",
-        ttl: 60 * 60
-      })
-    }))
-
-    initPassportLocal()
-    
-    app.use(passport.initialize())
-    app.use(passport.session())
-
-
-    app.use((req, res, next) => {
-
-      console.log(req.session, req.user)
-      next()
-
+        mongoUrl: config.MONGO_URL,
+        ttl: 60 * 60,
+      }),
     })
+  );
+
+  //registro de middleware de passport
+  initPassportLocal();
+  app.use(passport.initialize());
+  app.use(passport.session());
+
+  // middleware global
+  app.use((req, res, next) => {
+    //console.log(req.session, req.user)
+    next();
+  });
+
+  // Asignar el router de productos a la ruta /api/products
+  app.use("/api", productsRouter);
+
+  // Asignar el router de carritos a la ruta /api/carts
+  app.use("/api", cartsRouter);
+
+  // Asignar el router de users a la ruta /api/users
+  app.use("/api", usersRouter);
+
+  app.use("/api", authRouter);
+
+  app.use("/api", sessionsRouter);
 
 
-    app.use('/', Routes.home)
-    app.use('/api', (req, res, next) => {
-      req.io = io
-      next()
-    }, Routes.api)
 
+  //Plantilla Handlebars
+  app.use("/", viewRouter);
+  app.engine("handlebars", engine());
+  app.set("views", __dirname + "/views");
+  app.set("view engine", "handlebars");
 
-    io.on('connection', socketManager)
-
-
-    const port = 8080
-
-    server.listen(port, () => {
-      console.log(`Express Server listening at http://localhost:${port}`)
-    })
-    console.log('se ha conectado a la base de datos')
-  } catch (e) {
-    console.log('no se ha podido conectar a la base de datos')
-    console.log(e)
-  }
-})()
+  //Seteando de manera estática la carpeta public
+  app.use(express.static(__dirname + "/public"));
+})();
