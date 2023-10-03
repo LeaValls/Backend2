@@ -1,194 +1,178 @@
 const { Router } = require('express')
 const passport = require('passport')
-
-const userManager = require('../dao/managers/user.manager.js')
-const isAuth = require('../middlewares/auth.js')
-const { hashPassword, isValidPassword } = require('../utils/password.js')
-const {STRATEGY_NAME} = require ("../config/config.js")
+const userManager = require('./../dao/managersMongo/user.manager')
+const autenticacion = require('../middlewares/autenticacion.middlewares.js')
+const {verificacionLogin, verificacionSignup} = require('../middlewares/verificaciones.midleware')
+const { hashPassword, isValidPassword } = require('../utils/password')
+const { GITHUB_STRATEGY_NAME } = require('../config/config')
+const loginControllers = require('../controllers/login.controllers')
 
 const router = Router()
 
+// Funciones controladoras
+
 const signup = async (req, res) => {
-  const user = req.body
-  
-  console.log(user)
+    const user = req.body
 
-  const existing = await userManager.getByEmail(user.email)
+    // Verificamos si el usuario existe a traves del email
+    const userEmail = await userManager.getUserByEmail(user.email)
 
-  if (existing) {
-    return res.render('signup', {
-      error: 'El email ya existe'
-    })
-  }
-
-  if (user.password !== user.password2) {
-    return res.render('signup', {
-      error: 'Las contraseñas no coinciden'
-    })
-  }
-
-  try {
-    const newUser = await userManager.create({
-      ...user,
-      password: hashPassword(user.password)
-    })
-
-    const newCart = new Cart({ user: newUser._id });
-    await newCart.save();
-
-    req.session.user = {
-      name: newUser.firstname,
-      id: newUser._id,
-      ...newUser._doc
+    if(userEmail){
+        return res.render('signup', {
+            error: 'El Email ingresado ya existe.',
+            style: 'signup'
+        })
     }
 
-    console.log(req.session)
+    if(user.password !== user.password2) {
+        return res.render('signup', {
+            error: 'Las contraseñas no coinciden.',
+            style: 'signup'
+        })
+    }
 
-    req.session.save((err) => {
-      res.redirect('/')
-    })
+    // Creaccion del usuario
+    try {
 
-  } catch(e) {
-    return res.render('signup', {
-      error: 'Ocurrio un error. Intentalo mas tarde'
-    })
-  }
+        const newUser = await userManager.addUser({
+            ...user,
+            password: hashPassword(user.password)
+        })
+        
+        req.session.user = {
+            name: newUser.first_name,
+            id: newUser._id,
+            ...newUser._doc
+        }
+
+        req.session.save((err) => {
+            res.redirect('/')
+        })
+
+    } catch (error) {
+        return res.render('signup', {
+            error: 'Ocurrio un error. Vuelve a intentarlo',
+            style: 'signup'
+        })
+    }
+
 }
 
 const login = async (req, res) => {
-  const { email, password } = req.body
 
-  try {
+    const { email, password } = req.body
 
-    const _user = await userManager.getByEmail(email)
+    try {
 
-    if (!_user) {
-      return res.render('login', { error: 'El usuario no existe' })
+        const _user = await userManager.getUserByEmail(email)
+
+        
+        if(!_user){
+            return res.render('login', {
+                error: 'Contraseña o Usuario incorrecto',
+                style: 'login'
+            })
+        }
+        
+        const { password: _password, ...user } = _user
+
+        if(!password) {
+            return res.render('login', {
+                error: 'Contraseña requerida',
+                style: 'login'
+            })
+        }
+
+        if(!isValidPassword( password, _password )){
+            return res.render('login', {
+                error: 'Contraseña o Usuario incorrecto',
+                style: 'login'
+            })
+        }
+
+
+
+        if(_user.email == "adminCoder@coder.com" && password == "adminCod3r123"){
+
+            req.session.user = {
+                name: user.first_name,
+                id: user._id,
+                ...user,
+                role: 'admin'
+            }
+
+            req.session.save((err) => {
+                if(!err){
+                    res.redirect('/')
+                }
+            })
+
+        } else {
+            req.session.user = {
+                name: user.first_name,
+                id: user._id,
+                ...user
+            }
+
+            req.session.save((err) => {
+                if(!err){
+                    res.redirect('/')
+                }
+            })
+        }
+
+
+    } catch (error) {
+        console.log(error)
+        res.render('login', {
+            error: 'Ocurrio un error. Vuelve a intentarlo.',
+            style: 'login'
+        })
     }
-
-
-    const { password: _password, ...user } = _user
-
-    if (!password) {
-      return res.render('login', { error: 'El password es requerido' })
-    }
-
-    if(!isValidPassword(password, _password)) {
-      return res.render('login', { error: 'Contraseña invalida' })
-    }
-
-    const cartManager = await cartManager.findById({ user: user._id });
-
-    req.session.user = {
-      name: user.firstname,
-      id: user._id,
-      ...user
-    }
-
-    req.session.save((err) => {
-      if(!err) {
-        res.redirect('/')
-      }
-    })
-  } catch(e) {
-    console.log(e)
-    res.render('login', { error: 'Ha ocurrido un error' })
-  }
 
 }
 
 const logout = (req, res) => {
-  const { user } = req.cookies
 
-  res.clearCookie('user')
+    // const { user } = req.cookies
 
-  req.session.destroy((err) => {
-    if(err) {
-      return res.redirect('/error')
-    }
+    // // Borrar las cookies
+    // res.clearCookie('user')
+
+    req.session.destroy((err) => {
+        if(err) {
+            return res.redirect('/error')
+        }
+    })
 
     res.render('logout', {
-      user: req.user.name
+        user: req.user.name,
+        style: 'login'
     })
-
-    req.user = null
-  })
-
 }
 
-const resetpassword = async (req, res) => {
-  const { email, password1, password2 } = req.body
+// Rutas de Login
 
-  console.log(email)
+router.get('/signup', loginControllers.getSignup)
+router.get('/login', loginControllers.getLogin)
+router.get('/profile', autenticacion, loginControllers.getProfile)
+router.get('/resetpassword', loginControllers.getResetpassword)
+router.get('/logout', autenticacion, loginControllers.getLogout)
 
-  const user = await userManager.getByEmail(email)
+// RUTAS DE GITHUB
 
-  console.log(user)
+router.get('/github', passport.authenticate(GITHUB_STRATEGY_NAME), (req, res) => {})
 
-  if (!user) {
-    return res.render('resetpassword', { error: 'el usuario no existe' })
-  }
+router.get('/githubSessions', passport.authenticate(GITHUB_STRATEGY_NAME), loginControllers.getGithubSession)
 
-  if (password1 !== password2) {
-    return res.render('resetpassword', { error: 'las contraseñas no coinciden' })
-  }
-
-  try {
-    await userManager.save(user._id, {
-      ...user,
-      password: hashPassword(password1)
-    })
-
-
-    res.redirect('/login')
-
-  } catch (e) {
-    console.log(e)
-    return res.render('resetpassword', { error: 'Ha ocurrido un error' })
-  }
-}
-
-router.get('/signup', (_, res) => res.render('signup'))
-router.get('/login', (_, res) => res.render('login'))
-router.get('/resetpassword', (_, res) => res.render('resetpassword'))
-
-
-const callback = (req,res)=>{
-  const user = req.user;
-  req.session.user = {
-    id:user.id,
-    name:user.firstname,
-    role:user?.role??"costumer",
-    email:user.email
-  }
-  res.redirect("/");
-}
-
-router.get("/github",passport.authenticate(STRATEGY_NAME), (_,res)=>{});
-router.get("/githubSessions", passport.authenticate(STRATEGY_NAME), callback);
-
-
-router.post('/signup', passport.authenticate('local-signup', {
-  successRedirect: '/profile',
-  failureRedirect: '/signup'
+router.post('/signup', verificacionSignup, passport.authenticate('local-signup', {
+    successRedirect: '/profile',
+    failureRedirect: '/signup'
 }))
-
-router.post('/login', passport.authenticate('local-login', {
-  successRedirect: '/',
-  failureRedirect: '/login'
+router.post('/login', verificacionLogin, passport.authenticate('local-login', {
+    successRedirect: '/',
+    failureRedirect: '/login'
 }))
-
-router.post('/resetpassword', resetpassword)
-router.get('/logout', isAuth, (req, res) => {
-  const { firstname, lastname } = req.user
-  req.logOut((err) => {
-    if(!err) {
-      res.render('logout', {
-        name: `${firstname} ${lastname}`
-      })
-    }
-  })
-})
-
+router.post('/resetpassword', loginControllers.postResetpassword)
 
 module.exports = router

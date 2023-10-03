@@ -1,41 +1,32 @@
 const socket = io()
 
-const realTimeProducts = document.querySelector('#realTimeProducts')
+const listProducts = document.getElementById('list-products')
+const listProductsCart = document.getElementById("productsInCart")
 
-
-function addToCart(productId) {
-  socket.emit('addToCart', { userId: 1, productId })
+// Funcion del boton de Agregar al Carrito
+function addToCart (cartId) {
+    socket.emit('productCart', cartId)
 }
 
-function addProductToDOM({ price, id, title, description, keywords }) {
-  const div = document.createElement('div')
-  
-  div.innerHTML = `
-    <div class="uk-card uk-card-default">
-        <div class="uk-card-media-top">
-          <img alt="foto producto" />
-        </div>
-        <div class="uk-card-body">
-          <h3 class="uk-card-title">${title}</h3>
-          <h5>USD ${price}</h5>
-            ${keywords.reduce((acc, key) => acc + `<span class="uk-badge">${key}</span>`, '')}
-          <p>${description}</p>
-          <button onclick="addToCart(${id})" class="uk-button uk-button-secondary uk-button-small">Agregar al carrito</button>
-        </div>
-      </div>
-  `
-  realTimeProducts.appendChild(div)
+// Funcion para que el ADMIN elimine un producto
+function deleteProductAdmin (productId) {
+
+    socket.emit('deleteProduct', productId)
+
+    const p = productId.toString()
+    const div = document.getElementById(p)
+    
+    listProducts.removeChild(div)
+
 }
 
-socket.on('productsInCart', (products) => {
-  cartBadgeEl.innerHTML = products.length
-})
+// Funcion para elimnar producto del carrito de Compras
+function deleteProductCart (productId) {
+    
+    socket.emit('deleteProductCart', productId)
 
+    setTimeout(() => {
+        location.reload(true)
+    }, 500)
 
-socket.on('msg', (msg) => {
-  console.log(msg)
-})
-
-socket.on('productoNew', (product) => {
-  addProductToDOM(product)
-})
+}

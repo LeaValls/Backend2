@@ -1,19 +1,19 @@
 const { Router } = require('express')
-
-const {
-  getById,
-  getAll,
-  create,
-  deleteById,
-  putPatch
-} = require ("../../controllers/products.controller.js")
+const productController = require('../../controllers/apiControllers/products.controllers')
+const { policiesAdmin } = require('../../middlewares/policies.middleware')
 
 const router = Router()
 
-router.get('/:id', getById)
-router.get('/', getAll)
-router.post('/', create)
-router.delete('/:id', deleteById)
-router.put('/:id', putPatch)
+router.get('/', productController.getProducts)
+
+router.get('/mockingproducts', productController.getProductsMock)
+
+router.get('/:pid', productController.getProductById)
+
+router.post('/', policiesAdmin, productController.addProduct)
+
+router.put('/:pid', policiesAdmin, productController.updateProduct)
+
+router.delete('/:pid', policiesAdmin, productController.deleteProduct)
 
 module.exports = router

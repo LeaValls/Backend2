@@ -1,23 +1,41 @@
 const { Router } = require('express')
-const ProductRoutes = require('./api/products.router.js')
-const UserRoutes = require('./api/users.router.js')
-const HomeRoutes = require('./home.router.js')
-const LoginRoutes = require('./login.router.js')
-const CartsRoutes = require ("./carts.router.js")
+const ProductRouter = require('./api/products.router')
+const CartRouter = require('./api/carts.router')
+const HomeRouter = require('./home.router')
+const UserRouter = require('./api/user.router')
+const LoginRouter = require('./login.router')
+const ChatRouter = require('./chat.router')
+const AdminRouter = require('./admin.router')
 
-const api = Router();
+// api
+const router = Router()
 
-api.use('/products', ProductRoutes);
-api.use('/users', UserRoutes);
-api.use("/carts", CartsRoutes);
+// ruta de productos
+router.use('/products', ProductRouter)
 
+// ruta del carrito
+router.use('/carts', CartRouter)
 
+// ruta del usuario
+router.use('/users', UserRouter)
+
+// home
 const home = Router()
 
-home.use('/', HomeRoutes)
-home.use('/', LoginRoutes)
+// ruta del home
+home.use('/', HomeRouter)
+
+// ruta del login
+home.use('/', LoginRouter)
+
+// ruta del chat
+home.use('/chatmessage', ChatRouter)
+
+// ruta del admin
+home.use('/admin', AdminRouter)
+
 
 module.exports = {
-  api,
-  home
-};
+    api: router,
+    home
+}

@@ -1,30 +1,19 @@
-const { Router } = require('express')
-const isAuth = require('../middlewares/auth')
-const {
-  getAllPaged,
-  chat,
-  getAll,
-  getAllProducts,
-  getById,
-  profile,
-  carts
-} = require ("../controllers/home.controller.js")
+const { Router } = require("express")
+const autenticacion = require('../middlewares/autenticacion.middlewares')
+const homeControllers = require("../controllers/home.controllers")
+const { productsOutOfStock } = require('../middlewares/policies.middleware')
 
 const router = Router()
 
+// rutas de home de HTML
 
-router.get('/', getAllPaged)
+router.get('/', autenticacion, homeControllers.getHome)
+router.post('/', homeControllers.postHome)
 
-router.get('/chat', isAuth, chat)
+router.get('/realtimeproducts', autenticacion, homeControllers.getRealTimeProducts)
 
-router.get('/realtimesProducts', getAll)
+router.get('/:cid/purchase', autenticacion, productsOutOfStock, homeControllers.getOrderHome)
 
-router.get("/products", getAllProducts);
-
-router.post("/products", isAuth, getById);
-
-router.get('/profile', isAuth, profile)
-
-router.get("/carts", carts)
+router.get('/carts/:cid', autenticacion, homeControllers.getCartHome)
 
 module.exports = router

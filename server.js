@@ -1,88 +1,104 @@
 (async () => {
-  const dotenv = require ("dotenv")
-  dotenv.config()
-
+  require('dotenv').config()
+  
   const http = require('http')
   const path = require('path')
 
   const express = require('express')
   const handlebars = require('express-handlebars')
-  const { Server } = require("socket.io");
-  const mongoose = require('mongoose')
+  const { Server } = require('socket.io')
+  const mongoDB = require('./service/mongo.db')
   const cookieParser = require('cookie-parser')
   const session = require('express-session')
   const MongoStore = require('connect-mongo')
   const passport = require('passport')
+  const { PORT, HOST, MONGO_CONNECT, ADMIN_EMAIL, ADMIN_PASSWORD } = require('./config/config')
+  const handleError = require('./middlewares/handleError')
 
-  const config = require ("./config/config.js")
-  const Routes = require('./routes/index.js')
-  const socketManager = require('./websocket/index.js')
-  const initPassport = require('./config/passport.init.js')
-
- 
-
-  const cartRouter = require("./routes/carts.router.js")
-
-  console.log(config)
+  const { api, home } = require('./routes/index.js')
+  const SocketManager = require('./websocket')
+  const initPassportLocal = require('./config/passport.init.js')
+  const { isValidPassword } = require('./utils/password.js')
 
   try {
+      
+      // conectar la base de datos antes de levantar el server
+      
+      await mongoDB.connect()
+      
+      const app = express()
+      const server = http.createServer(app) 
+      const io = new Server(server) // SOCKET
+      
+      //handlebars
+      app.engine('handlebars', handlebars.engine({
+          extname: 'handlebars',
+          runtimeOptions: {
+              allowProtoPropertiesByDefault: true,
+              allowProtoMethodsByDefault: true
+          }
+      }));
+      app.set('views', path.join(__dirname, '/views'))
+      app.set('view engine', 'handlebars')
+      
+      app.use(express.urlencoded({ extended: true })) // Para poder parsear el body y los query params
+      app.use(express.json())
+      app.use('/static', express.static(path.join(__dirname + '/public')))
+      app.use(cookieParser('secret'))
 
-    await mongoose.connect(config.MONGO_URL)
+      app.use(session({
+          secret: 'secret',
+          resave: true,
+          saveUninitialized: true,
+          store: MongoStore.create({
+              mongoUrl: MONGO_CONNECT,
+              ttl: 60 * 60
+          })
+      }))
 
-    const app = express() 
-    const server = http.createServer(app)
-    const io = new Server(server) 
+      //Registramos los middlewares de passport
+      initPassportLocal()
+      app.use(passport.initialize())
+      app.use(passport.session())
+      
+      //middlware GLOBAL
+      app.use((req, res, next) => {
 
-
-    app.engine('handlebars', handlebars.engine())
-    app.set('views', path.join(__dirname, '/views'))
-    app.set('view engine', 'handlebars')
-
-    app.use(express.urlencoded({ extended: true }))
-    app.use(express.json())
-    app.use('/static', express.static(path.join(__dirname + '/public')))
-    app.use(cookieParser('esunsecreto'))
-    
-    app.use(session({
-      secret: 'esunsecreto',
-      resave: true,
-      saveUninitialized: true,
-
-      store: MongoStore.create({
-        mongoUrl: "mongodb+srv://app:5UJvYAsuYJ9v461V@cluster0.ryzcf1s.mongodb.net/ecommerce?retryWrites=true&w=majority",
-        ttl: 60 * 60
+          if(req.user){  
+              if(req.user.email == ADMIN_EMAIL && isValidPassword(ADMIN_PASSWORD, req.user.password)){
+                  req.user.role = 'admin'
+              }
+          }
+          next()
       })
-    }))
 
-    initPassport()
-    
-    app.use(passport.initialize())
-    app.use(passport.session())
-    
+      app.use((req, res, next) => {
+          req.io = io
 
-    app.use((req, res, next) => {
+          next()
+      })
 
-      console.log(req.session, req.user)
-      next()
-    })
+      // ruta del home
+      app.use('/', home)
+      
+      // ruta de las api
+      app.use('/api', api)
 
-    app.use('/', Routes.home)
-    app.use('/api', (req, res, next) => {
-      req.io = io
-      next()
-    }, Routes.api, cartRouter)
+      app.use(handleError)
+      
+      // WEB SOCKET
+      io.on('connection', SocketManager)
+      
+      
+      server.listen(PORT, () => {
+          console.log(`Servidor leyendose desde http://${HOST}:${PORT}`)
+      })
 
-    io.on('connection', socketManager)
+      console.log('Se ha conectado a la base de datos de MongoDb')
 
-    const port = 8080
-
-    server.listen(port, () => {
-      console.log(`Express Server listening at http://localhost:${port}`)
-    })
-
-    console.log('se ha conectado a la base de datos')
-  } catch(e) {
-    console.log('no se ha podido conectar a la base de datos')
+  } catch (error) {
+      console.log('No se ha podido conectar a la base de datos')
+      console.log(error)
   }
 })()
 

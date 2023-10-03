@@ -1,18 +1,25 @@
-const faker = require("faker");
-const productModel = require("../dao/models/productModel.js");
-const mongoose = require('mongoose');
+require('dotenv').config()
 
+// Importar los productos del JSON a MONGO
 
+const fs = require('fs/promises')
+const path = require('path')
+const mongoose = require('mongoose')
 
+const productModel = require('../dao/models/product.model')
 
-async function main() {
-  await mongoose.connect("mongodb+srv://app:5UJvYAsuYJ9v461V@cluster0.ryzcf1s.mongodb.net/ecommerce?retryWrites=true&w=majority")
-  // const result = await productModel.insertMany(productsRecords)
-const result = await productModel.find({stock: 13}).explain("executionStats")
+async function seed() {
+    await mongoose.connect(process.env.MONGO_CONNECT)
 
-  console.log(result)
+    const filepath = path.join(__dirname, '../', 'dao/data/productos.json')
+    const data = await fs.readFile(filepath, 'utf-8')
+    const products = JSON.parse(data).map(({ id, ...product }) => product)
 
-  await mongoose.disconnect()
+    const result = await productModel.insertMany(products)
+
+    console.log(result)
+
+    await mongoose.disconnect()
 }
 
-main()
+seed()

@@ -1,53 +1,56 @@
-const GithubStrategy = require ("passport-github2")
-const userManager = require ("../dao/managers/user.manager.js")
-const { CLIENT_ID, CLIENT_SECRET, STRATEGY_NAME} = require ("./config.js")
+const GithubStrategy = require('passport-github2')
+const ManagerFactory = require('../dao/managersMongo/manager.factory')
+const userManager = ManagerFactory.getManagerInstance('users')
+const cartManager = ManagerFactory.getManagerInstance('carts')
+const { GITHUB_CLIENT_ID, GITHUB_CLIENT_SECRET, PORT, HOST, GITHUB_STRATEGY_NAME } = require('./config')
 
-const githubAccess = {
-    clientID : CLIENT_ID,
-    clientSecret : CLIENT_SECRET,
-    callBackURL: "http://localhost:8080/githubSessions"
-};
+const GitHubAccessConfig = { clientID: GITHUB_CLIENT_ID, clientSecret: GITHUB_CLIENT_SECRET, callBackURL: `http://${HOST}:${PORT}/githubSessions` }
 
 
-const githubUsers = async (profile,done) => {
-    console.log(profile)
-    const {name, email} = profile._json;
-    const _user = await userManager.getByEmail(email);
+// LOGICA DEL USUARIO
 
+const gitHubUser = async (profile, done) => {
+
+    console.log(profile._json)
+    const { name, email } = profile._json
+    const _user = await userManager.getUserByEmail( email )
     if(!_user){
-        console.log("usuario no encontardo")
+        console.log('Usuario inexistente')
+        
+        const cart = await cartManager.addCart()
 
         const newUser = {
-            firstname : name.split(" ")[0],
-            lastname : name.split(" ")[1],
+            first_name: name.split(" ")[0],
+            last_name: name.split(" ")[1],
             email: email,
             password: "",
-            gender: "None",
+            cart: cart
         }
 
-        const result = await userManager.create(newUser)
-        return done(null,result)
-    }
-    console.log("El usuario ya existe")
-    return done(null,_user)
-}
+        const result = await userManager.addUser(newUser)
 
-const githubController = async(
-    accessToken,
-    refreshToken,
-    profile,
-    done
-)=>{
-    try{ 
-        return await githubUsers(profile,done);
-    }catch(error){
+        return done(null, result)
+    }
+
+    // SI EL USUARIO YA EXISTE
+    console.log('El usuario ya existe, rol asignado: ', _user?.role)
+    return done(null, _user)
+
+}
+const profileController = async ( accessToken, refreshToken, profile, done ) => {
+    try {
+
+        return await gitHubUser(profile, done)
+
+    } catch (error) {
+        console.log(error)
         done(error)
     }
 }
 
 module.exports = {
     GithubStrategy,
-    githubAccess,
-    githubController,
-    strategyName: STRATEGY_NAME,
+    GitHubAccessConfig,
+    profileController,
+    strategyName: GITHUB_STRATEGY_NAME
 }

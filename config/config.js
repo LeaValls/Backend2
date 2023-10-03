@@ -1,7 +1,26 @@
 module.exports = {
-  MONGO_URL: process.env.MONGO_URL,
+ 
+  MONGO_CONNECT: process.env.MONGO_CONNECT,
+
+  
   PORT: process.env.PORT,
-  CLIENT_ID:process.env.CLIENT_ID,
-  CLIENT_SECRET:process.env.CLIENT_SECRET,
-  STRATEGY_NAME:process.env.STRATEGY_NAME,
+  HOST: process.env.HOST,
+
+  
+  GITHUB_CLIENT_ID: process.env.GITHUB_CLIENT_ID,
+  GITHUB_CLIENT_SECRET: process.env.GITHUB_CLIENT_SECRET,
+  GITHUB_STRATEGY_NAME: process.env.GITHUB_STRATEGY_NAME,
+
+  
+  PERSISTANCE: process.env.MANAGER_PERSISTANCE,
+
+  
+  ADMIN_EMAIL: process.env.ADMIN_EMAIL,
+  ADMIN_PASSWORD: process.env.ADMIN_PASSWORD,
+
+  
+  mail: {
+      GMAIL_ADDRESS: process.env.GMAIL_ADDRESS,
+      GMAIL_PWD: process.env.GMAIL_PWD
+  }
 }
