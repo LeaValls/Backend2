@@ -6,6 +6,7 @@ const {verificacionLogin, verificacionSignup} = require('../middlewares/verifica
 const { hashPassword, isValidPassword } = require('../utils/password')
 const { GITHUB_STRATEGY_NAME } = require('../config/config')
 const loginControllers = require('../controllers/login.controllers')
+const logger = require('../logger/index')
 
 const router = Router()
 
@@ -123,7 +124,7 @@ const login = async (req, res) => {
 
 
     } catch (error) {
-        console.log(error)
+        logger.error(error)
         res.render('login', {
             error: 'Ocurrio un error. Vuelve a intentarlo.',
             style: 'login'
@@ -157,6 +158,8 @@ router.get('/signup', loginControllers.getSignup)
 router.get('/login', loginControllers.getLogin)
 router.get('/profile', autenticacion, loginControllers.getProfile)
 router.get('/resetpassword', loginControllers.getResetpassword)
+router.get('/resetpasswordtoken', loginControllers.getResetPasswordToken)
+router.get('/resetpasswordemail', loginControllers.getResetPasswordEmail)
 router.get('/logout', autenticacion, loginControllers.getLogout)
 
 // RUTAS DE GITHUB
@@ -174,5 +177,6 @@ router.post('/login', verificacionLogin, passport.authenticate('local-login', {
     failureRedirect: '/login'
 }))
 router.post('/resetpassword', loginControllers.postResetpassword)
+router.post('/resetpasswordtoken', loginControllers.postTokenResetPassword)
 
 module.exports = router

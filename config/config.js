@@ -22,5 +22,10 @@ module.exports = {
   mail: {
       GMAIL_ADDRESS: process.env.GMAIL_ADDRESS,
       GMAIL_PWD: process.env.GMAIL_PWD
-  }
+  },
+  
+
+  CONSOLE_LOG_LEVEL: 'debug',
+  FILE_LOG_LEVEL: 'info',
+  ERROR_LOG_LEVEL: 'error'
 }
