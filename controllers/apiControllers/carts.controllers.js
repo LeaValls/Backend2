@@ -6,7 +6,7 @@ const cartManager = ManagerFactory.getManagerInstance('carts')
 const productManager = ManagerFactory.getManagerInstance('products')
 const purchaseManager = ManagerFactory.getManagerInstance('purchases')
 
-const mailSenderService = require('../../service/mail.sender.service')
+const mailSenderService = require('../../services/mail.sender.service')
 
 class CartController {
 
