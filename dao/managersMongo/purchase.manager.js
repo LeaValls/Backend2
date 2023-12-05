@@ -1,4 +1,3 @@
-// Importacion del modelo de mongo
 const orderModel = require('../models/order.model')
 
 class PurchaseManager {

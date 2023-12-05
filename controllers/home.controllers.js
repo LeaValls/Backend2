@@ -1,9 +1,7 @@
 const ManagerFactory = require('../dao/managersMongo/manager.factory')
-
 const productManager = ManagerFactory.getManagerInstance('products')
 const cartManager = ManagerFactory.getManagerInstance('carts')
 const purchaseManager = ManagerFactory.getManagerInstance('purchases')
-
 const mailSenderService = require('../services/mail.sender.service')
 
 class HomeController {
@@ -71,7 +69,8 @@ class HomeController {
             user: req.user ? {
                 ...req.user,
                 isAdmin: req.user.role == 'admin',
-                isPublic: req.user.role == 'Customer'
+                isPublic: req.user.role == 'Customer',
+                isPremium: req.user.role == 'Premium'
             } : null,
             idCart: cart._id,
             products,
@@ -142,7 +141,8 @@ class HomeController {
             user: req.user ? {
                 ...req.user,
                 isAdmin: req.user.role == 'admin',
-                isPublic: req.user.role == 'Customer'
+                isPublic: req.user.role == 'Customer',
+                isPremium: req.user.role == 'Premium'
             } : null,
             idCart: cart._id,
             products,
@@ -208,7 +208,8 @@ class HomeController {
             user: req.user ? {
                 ...req.user,
                 isAdmin: req.user.role == 'admin',
-                isPublic: req.user.role == 'Customer'
+                isPublic: req.user.role == 'Customer',
+                isPremium: req.user.role == 'Premium'
             } : null,
             idCart: cart._id,
             products,
@@ -241,7 +242,8 @@ class HomeController {
             user:  req.user ? {
                 ...req.user,
                 isAdmin: req.user.role == 'admin',
-                isPublic: req.user.role == 'Customer'
+                isPublic: req.user.role == 'Customer',
+                isPremium: req.user.role == 'Premium'
             } : null,
             products,
             falseCart: !cartId.products.length,
@@ -282,7 +284,8 @@ class HomeController {
                     user: req.user ? {
                         ...req.user,
                         isAdmin: req.user.role == 'admin',
-                        isPublic: req.user.role == 'Customer'
+                        isPublic: req.user.role == 'Customer',
+                        isPremium: req.user.role == 'Premium'
                     } : null,
                     idCart: cartId._id,
                     style: 'order'
@@ -367,8 +370,9 @@ class HomeController {
 
             <h3>¡Muchas gracias, te esperamos pronto!</h3>
         `
+        const subject = 'Compra realizada'
 
-        mailSenderService.send(order.purchaser, template)
+        mailSenderService.send(subject, order.purchaser, template)
 
         const cartId = await cartManager.getCartById(req.user.cart._id)
 
@@ -377,7 +381,8 @@ class HomeController {
             user: req.user ? {
                 ...req.user,
                 isAdmin: req.user.role == 'admin',
-                isPublic: req.user.role == 'Customer'
+                isPublic: req.user.role == 'Customer',
+                isPremium: req.user.role == 'Premium'
             } : null,
             idCart: cartId._id,
             style: 'order',

@@ -13,6 +13,9 @@ const signup = async ( req, email, password, done ) => {
 
     const _user = await userManager.getUserByEmail( email )
 
+    const today = new Date()
+
+
     if(_user){
         logger.warn('El usuario ya existe.')
         return done(null, false)
@@ -25,7 +28,8 @@ const signup = async ( req, email, password, done ) => {
         const newUser = await userManager.addUser({
             ...user,
             password: hashPassword(password),
-            cart: cart
+            cart: cart,
+            last_connection: `Connect ${today}`
         })
 
         let cartId = await cartManager.getCartById(newUser.cart._id)
@@ -48,6 +52,9 @@ const signup = async ( req, email, password, done ) => {
 
 const login = async ( email, password, done ) => {
 
+    const today = new Date()
+
+
     try {
         
         const _user = await userManager.getUserByEmail( email )
@@ -66,7 +73,8 @@ const login = async ( email, password, done ) => {
             return done(null, false)
         }
         
-        done(null, _user)
+        await userManager.updateUser(_user._id, {..._user, last_connection: `Connect ${today}`})
+        return done(null, _user)
 
     } catch (error) {
         logger.error('Ha ocurrido un error')

@@ -64,7 +64,7 @@ async function verificacionSignup (req,res,next) {
 
     
     try {
-        // Verificamos que el email ingresado tenga el formato de email.
+        
         const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     
         if(!regex.test(user.email)){
@@ -74,7 +74,7 @@ async function verificacionSignup (req,res,next) {
             })
         }
 
-        // Verificamos si el usuario existe a traves del email
+        
 
         const userEmail = await userManager.getUserByEmail(user.email)
 

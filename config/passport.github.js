@@ -9,9 +9,11 @@ const logger = require('../logger/index')
 const GitHubAccessConfig = { clientID: GITHUB_CLIENT_ID, clientSecret: GITHUB_CLIENT_SECRET, callBackURL: `http://${HOST}:${PORT}/githubSessions` }
 
 
-// LOGICA DEL USUARIO
+
 
 const gitHubUser = async (profile, done) => {
+
+    const today = new Date()
 
     logger.info(profile._json)
     const { name, email } = profile._json
@@ -26,7 +28,8 @@ const gitHubUser = async (profile, done) => {
             last_name: name.split(" ")[1],
             email: email,
             password: "",
-            cart: cart
+            cart: cart,
+            last_connection: `Connect ${today}`
         }
 
         const result = await userManager.addUser(newUser)
@@ -34,8 +37,9 @@ const gitHubUser = async (profile, done) => {
         return done(null, result)
     }
 
-    // SI EL USUARIO YA EXISTE
+    
     logger.warn('El usuario ya existe, rol asignado: ', _user?.role)
+    await userManager.updateUser(_user._id, {..._user, last_connection: `Connect ${today}`})
     return done(null, _user)
 
 }

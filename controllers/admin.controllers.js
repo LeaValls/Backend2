@@ -1,7 +1,7 @@
 const ManagerFactory = require('../dao/managersMongo/manager.factory')
-
 const productManager = ManagerFactory.getManagerInstance('products')
 const cartManager = ManagerFactory.getManagerInstance('carts')
+const userManager = ManagerFactory.getManagerInstance('users')
 
 class AdminController {
 
@@ -15,7 +15,8 @@ class AdminController {
             user: req.user ? {
                 ...req.user,
                 isAdmin: req.user.role == 'admin',
-                isPublic: req.user.role == 'Customer'
+                isPublic: req.user.role == 'Customer',
+                isPremium: req.user.role == 'Premium'
             } : null,
             idCart: cart._id
         })
@@ -30,20 +31,104 @@ class AdminController {
             user: req.user ? {
                 ...req.user,
                 isAdmin: req.user.role == 'admin',
-                isPublic: req.user.role == 'Customer'
+                isPublic: req.user.role == 'Customer',
+                isPremium: req.user.role == 'Premium'
             } : null
         })
     }
 
-    // Creacion de un nuevo producto solo por el ADMIN
-    async addProductAdmin (req, res) {
+    async getUsersAdmin (req, res) {
 
-        await productManager.addProduct(req.body)
-    
-        res.redirect('/admin/admin')
+        res.render('admin/getUser', {
+            title: 'Visualizar Usuario',
+            style: 'admin',
+            user: req.user ? {
+                ...req.user,
+                isAdmin: req.user.role == 'admin',
+                isPublic: req.user.role == 'Customer',
+                isPremium: req.user.role == 'Premium'
+            } : null
+        })
     }
 
-    // Editar un producto existente solo por el ADMIN
+    async postUsersAdmin (req, res){
+
+        const userId = req.body.id
+        
+        const user = await userManager.getUserById(userId)
+        const cart = await cartManager.getCartById(req.user.cart._id)
+
+        if(!user){
+            res.render('errorCarrito', {
+                title: 'No existe este usuario.',
+                style: 'order',
+                user: req.user ? {
+                    ...req.user,
+                    isAdmin: req.user.role == 'admin',
+                    isPublic: req.user.role == 'Customer',
+                    isPremium: req.user.role == 'Premium'
+                } : null,
+                idCart: cart._id
+            })
+            return
+        }
+
+        res.render('profiledos', {
+            ...user,
+            title: `Usuario Seleccionado - ${user.first_name}`,
+            style: 'profile',
+            user: req.user ? {
+                ...req.user,
+                isAdmin: req.user.role == 'admin',
+            } : null,
+            userdos: user ? {
+                ...user,
+                isPublic: user.role == 'Customer',
+                isPremium: user.role == 'Premium'
+            } : null,
+            idCart: cart._id
+        })
+
+    }
+
+    async deleteUsersAdmin (req, res){
+        const { id } = req.params
+
+        const cart = await cartManager.getCartById(req.user.cart._id)
+        const user = await userManager.deleteUser( id )
+            if(user.deletedCount >= 1){
+                res.render('errorCarrito', {
+                    title: 'Usuario eliminado',
+                    style: 'order',
+                    user: req.user ? {
+                        ...req.user,
+                        isAdmin: req.user.role == 'admin',
+                        isPublic: req.user.role == 'Customer',
+                        isPremium: req.user.role == 'Premium'
+                    } : null,
+                    idCart: cart._id
+                })
+                return
+            }
+    }
+
+    
+    async addProductAdmin (req, res) {
+        if(req.user.role == 'Premium'){
+            await productManager.addProduct({
+                ...req.body,
+                owner: req.user.email
+            })
+
+            res.redirect('/admin/admin')
+        } else {
+            await productManager.addProduct(req.body)
+        
+            res.redirect('/admin/admin')
+        }
+    }
+
+    
     async updateProductAdmin (req, res) {
 
         const {id, ...body} = req.body

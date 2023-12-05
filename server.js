@@ -23,6 +23,7 @@
     const { isValidPassword } = require('./utils/password.js')
     const logger = require('./logger/index')
     const loggerMiddleware = require('./middlewares/logger.middleware')
+    const eliminarUsuariosInactivosMiddleware = require('./middlewares/eliminarUsuariosInactivosMiddleware.js')
 
     try {
         
@@ -73,6 +74,8 @@
                 ttl: 60 * 60
             })
         }))
+
+        eliminarUsuariosInactivosMiddleware()
 
         //Registramos los middlewares de passport
         initPassportLocal()

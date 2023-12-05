@@ -4,11 +4,9 @@ const chatMessageManager = require('./chat.message.manager')
 const userManager = require('./user.manager')
 const purchaseManager = require('./purchase.manager')
 const tokenPasswordManager = require('./token.password.manager')
-
 const productManagerFile = require('../managers/ProductManager')
 const cartManagerFile = require('../managers/CartManager')
 const userManagerFile = require('../managers/UserManager')
-
 const { PERSISTANCE } = require('../../config/config')
 
 class ManagerFactory {
