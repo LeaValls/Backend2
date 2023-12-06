@@ -34,9 +34,10 @@
   "description": "proyecto backend",
   "main": "index.js",
   "scripts": {
-    "test": "echo\"Error: no test specified\" && exist 1",
     "dev": "nodemon server.js",
-    "start": "node server.js"
+    "start": "node server.js",
+    "test": "echo\"Error: no test specified\" && exist 1"
+    
   },
   "author": "",
   "license": "ISC",
