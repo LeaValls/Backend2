@@ -165,11 +165,9 @@ components:
       example:
         _id: ObjectId('XXX')
         status: true
-        title: Leche
-        description: Leche La serenisima
+        title: Masala
+        description: Té negro tipo Assam en hebras enteras orgánico con canela, jengibre, cardamomo, pimienta negra, clavo y anís estrellado
         code: a056
-        price: 550
-        stock: 296
-        category: Lacteos
-        thumbnail: [static/img/agua.jfif]
+        price: 1450
+        stock: 20
         owner: admin
