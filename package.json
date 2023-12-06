@@ -34,12 +34,15 @@
   "description": "proyecto backend",
   "main": "index.js",
   "scripts": {
-    "test": "echo\"Error: no test specified\" && exist 1"
+    "test": "echo\"Error: no test specified\" && exist 1",
+    "dev": "nodemon server.js",
+    "start": "node server.js"
   },
   "author": "",
   "license": "ISC",
   "devDependencies": {
     "chai": "^4.3.10",
-    "mocha": "^10.2.0"
+    "mocha": "^10.2.0",
+    "supertest": "^6.3.3"
   }
 }
